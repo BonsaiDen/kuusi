@@ -72,6 +72,12 @@ function StaticBox:overlaps(other)
     end
 end
 
+function StaticBox:overlapArea(other)
+    local xo = math.max(0, math.min(self.max.x, other.max.x) - math.max(self.min.x, other.min.x))
+    local yo = math.max(0, math.min(self.max.y, other.max.y) - math.max(self.min.y, other.min.y))
+    return xo * yo
+end
+
 function StaticBox:within(x, y, mx, my)
     return self.min.x < mx and self.min.y < my
             and self.max.x > x and self.max.y > y
@@ -890,9 +896,20 @@ function BoxManager:eachIn(x, y, mx, my, callback)
 end
 
 function BoxManager:draw(x, y, mx, my, debug)
+
+    local boxes = {}
     self:eachIn(x, y, mx, my, function(box)
-        box:draw(debug)
+        table.insert(boxes, box)
     end)
+
+    table.sort(boxes, function(a, b)
+        return a.pos.z < b.pos.z
+    end)
+
+    for i=1,#boxes do
+        boxes[i]:draw(debug)
+    end
+
 end
 -- End Manager ----------------------------------------------------------------
 

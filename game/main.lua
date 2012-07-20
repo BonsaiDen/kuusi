@@ -23,9 +23,9 @@ require 'Player'
 require 'Editor'
 
 function game.init(conf)
-    conf.title = "Tuff"
-    conf.width = 400
-    conf.height = 240
+    conf.title = "Kuusi"
+    conf.width = 256
+    conf.height = 144
     conf.scale = 2
     conf.fps = 60
 end

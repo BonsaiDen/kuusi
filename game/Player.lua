@@ -46,7 +46,9 @@ function Player:new(x, y, w, h)
     self.drawDirection = self.direction
     self.maxSpeed = 85
     self.accSpeed = 13
-    self.decSpeed = 14
+    self.decSpeed = 16
+
+    self.pos.z = -1
 
 end
 
@@ -143,7 +145,7 @@ function Player:update(dt)
     if keyboard.wasPressed('s') and not self.contactSurface.up then
 
         local jump = false
-        if now - self.lastWallContact <= 0.075 and self.direction == self.lastWallDirection then
+        if now - self.lastWallContact <= 0.1 and self.direction == self.lastWallDirection then
             self.movement.x = 170 * self.direction
             self.lastWallJump = now
             self.lastWallContact = -10

@@ -438,6 +438,7 @@ typedef struct ImageTile {
 static ALLEGRO_BITMAP *getImage(const char *filename) {
     
     ALLEGRO_BITMAP *img = NULL;
+    ImageTile *tile = NULL;
 
     // Check if we need to load the image
     if (!graphicsImages->hasKey(graphicsImages, filename)) {
@@ -449,7 +450,7 @@ static ALLEGRO_BITMAP *getImage(const char *filename) {
 
         graphicsImages->set(graphicsImages, filename, img);
 
-        ImageTile *tile = calloc(1, sizeof(ImageTile));
+        tile = calloc(1, sizeof(ImageTile));
         tile->cols = 1;
         tile->rows = 1;
 
@@ -477,10 +478,11 @@ static int imageSetTiles(lua_State *L) {
     const char* filename = luaL_checkstring(L, 1);
     int cols = luaL_checkinteger(L, 2);
     int rows = luaL_checkinteger(L, 3);
+    ImageTile *tile = NULL;
 
     getImage(filename);
 
-    ImageTile *tile = (ImageTile*)graphicsImageTiles->get(graphicsImageTiles, filename);
+    tile = (ImageTile*)graphicsImageTiles->get(graphicsImageTiles, filename);
     tile->cols = cols;
     tile->rows = rows;
 
@@ -491,8 +493,11 @@ static int imageSetTiles(lua_State *L) {
 static int imageDraw(lua_State *L) {
 
     const char* filename = luaL_checkstring(L, 1);
+    ALLEGRO_BITMAP *img = getImage(filename);
+
     int x = luaL_checkinteger(L, 2) + graphicsRenderOffsetX; 
     int y = luaL_checkinteger(L, 3) + graphicsRenderOffsetY; 
+    double a = luaL_optnumber(L, 6, 1);
 
     int flags = 0;
     if (luax_optboolean(L, 4, false)) {
@@ -503,9 +508,6 @@ static int imageDraw(lua_State *L) {
         flags |= ALLEGRO_FLIP_VERTICAL;
     }
 
-    double a = luaL_optnumber(L, 6, 1);
-
-    ALLEGRO_BITMAP *img = getImage(filename);
     if (a == 1) {
         al_draw_bitmap(img, x, y, flags);
 
@@ -520,9 +522,18 @@ static int imageDraw(lua_State *L) {
 static int imageDrawTile(lua_State *L) {
 
     const char* filename = luaL_checkstring(L, 1);
+    ALLEGRO_BITMAP *img = getImage(filename);
+    ImageTile *tile = (ImageTile*)graphicsImageTiles->get(graphicsImageTiles, filename);
+
     int x = luaL_checkinteger(L, 2) + graphicsRenderOffsetX; 
     int y = luaL_checkinteger(L, 3) + graphicsRenderOffsetY; 
     int index = luaL_checkinteger(L, 4) - 1;
+    double a = luaL_optnumber(L, 7, 1);
+
+    int w = al_get_bitmap_width(img) / tile->cols;
+    int h = al_get_bitmap_height(img) / tile->rows;
+    int ty = index / tile->rows;
+    int tx = index - ty * tile->cols;
 
     int flags = 0;
     if (luax_optboolean(L, 5, false)) {
@@ -532,16 +543,6 @@ static int imageDrawTile(lua_State *L) {
     if (luax_optboolean(L, 6, false)) {
         flags |= ALLEGRO_FLIP_VERTICAL;
     }
-
-    double a = luaL_optnumber(L, 7, 1);
-
-    ALLEGRO_BITMAP *img = getImage(filename);
-
-    ImageTile *tile = (ImageTile*)graphicsImageTiles->get(graphicsImageTiles, filename);
-    const int w = al_get_bitmap_width(img) / tile->cols;
-    const int h = al_get_bitmap_height(img) / tile->rows;
-    const int ty = index / tile->rows;
-    const int tx = index - ty * tile->cols;
 
     if (a == 1) {
         al_draw_bitmap_region(img, tx * w, ty * h, w, h, x, y, flags);
@@ -595,6 +596,9 @@ static int soundLoad(lua_State *L) {
 static int soundPlay(lua_State *L) {
 
     ALLEGRO_SAMPLE *snd;
+    float pan = luaL_optnumber(L, 2, 0);
+    float speed = luaL_optnumber(L, 3, 1);
+    ALLEGRO_SAMPLE_ID id;
 
     // If we supply a string create a new sample and return the id
     if (lua_isstring(L, 1)) {
@@ -606,11 +610,6 @@ static int soundPlay(lua_State *L) {
         
     }
 
-    float pan = luaL_optnumber(L, 2, 0);
-    float speed = luaL_optnumber(L, 3, 1);
-
-
-    ALLEGRO_SAMPLE_ID id;
     if (al_play_sample(snd, 1, pan, speed, ALLEGRO_PLAYMODE_ONCE, &id)) {
         lua_pushinteger(L, id._id);
         

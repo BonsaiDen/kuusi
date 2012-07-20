@@ -39,12 +39,14 @@ void ioCloseBundle() {
     }
 }
 
-char *ioLoadResource(const char *filename, int *bufSize) {
+char *ioLoadResource(const char *filename, unsigned int *bufSize) {
     
     // We assume the chdir to "game" has been done already
     if (zipFile == NULL) {
 
         FILE *f = fopen(filename, "r");
+        char *buf;
+
         if (f == NULL) {
             debugLog("io: File \"%s\" not found\n", filename);
             return NULL;
@@ -54,7 +56,7 @@ char *ioLoadResource(const char *filename, int *bufSize) {
         *bufSize = ftell(f);
         fseek(f, 0, SEEK_SET);
         
-        char *buf = (char*)calloc(*bufSize + 1, sizeof(char));
+        buf = (char*)calloc(*bufSize + 1, sizeof(char));
         if (fread(buf, sizeof(char), *bufSize, f) != *bufSize) {
             debugLog("io: File \"%s\" could not be read\n", filename);
             return NULL;
@@ -81,6 +83,7 @@ char *ioLoadResource(const char *filename, int *bufSize) {
                 unz_file_info file_info;
                 char filename_inzip[256];
                 int err = unzGetCurrentFileInfo(zipFile, &file_info, filename_inzip,sizeof(filename_inzip),NULL,0,NULL,0);
+                char *buf;
 
                 if (err != UNZ_OK) {
                     debugLog("io: Failed to get info on \"%s\" in bundle\n", filename);
@@ -88,7 +91,7 @@ char *ioLoadResource(const char *filename, int *bufSize) {
                 }
 
                 *bufSize = file_info.uncompressed_size;
-                char *buf = (char*)calloc(*bufSize + 1, sizeof(char));
+                buf = (char*)calloc(*bufSize + 1, sizeof(char));
                 unzReadCurrentFile(zipFile, buf, *bufSize);
 
                 unzCloseCurrentFile(zipFile);
@@ -106,21 +109,26 @@ char *ioLoadResource(const char *filename, int *bufSize) {
 }
 
 static ALLEGRO_FILE *ioOpenFile(const char *filename) {
-    int len;
+    unsigned int len;
     char *buf = ioLoadResource(filename, &len);
     return al_open_memfile(buf, len, "r");
 }
 
 ALLEGRO_BITMAP *ioLoadBitmap(const char *filename) {
 
+    unsigned int len;
+    char *ext;
+    ALLEGRO_FILE *fp = NULL;
+    ALLEGRO_BITMAP *img = NULL;
+
     debugLog("io: load bitmap \"%s\"\n", filename);
 
-    int len = strlen(filename);
-    char *ext = (char*)calloc(5, sizeof(char));
+    len = strlen(filename);
+    ext = (char*)calloc(5, sizeof(char));
     strcpy(ext, filename + (len - 4));
 
-    ALLEGRO_FILE *fp = ioOpenFile(filename);
-    ALLEGRO_BITMAP *img = al_load_bitmap_f(fp, ext);
+    fp = ioOpenFile(filename);
+    img = al_load_bitmap_f(fp, ext);
 
     free(ext);
 
@@ -131,30 +139,35 @@ ALLEGRO_BITMAP *ioLoadBitmap(const char *filename) {
 
 ALLEGRO_SAMPLE *ioLoadSample(const char *filename) {
 
+    unsigned int len;
+    char *ext;
+    ALLEGRO_FILE *fp = NULL;
+    ALLEGRO_SAMPLE *smp = NULL;
+
     debugLog("io: load sample \"%s\"\n", filename);
 
-    int len = strlen(filename);
-    char *ext = (char*)calloc(5, sizeof(char));
+    len = strlen(filename);
+    ext = (char*)calloc(5, sizeof(char));
     strcpy(ext, filename + (len - 4));
 
-    ALLEGRO_FILE *fp = ioOpenFile(filename);
-    ALLEGRO_SAMPLE *img = al_load_sample_f(fp, ext);
+    fp = ioOpenFile(filename);
+    smp = al_load_sample_f(fp, ext);
 
     free(ext);
 
     debugLog("io: sample \"%s\" loaded\n", filename);
 
-    return img;
+    return smp;
 }
 
 void ioDumpResource(const char* filename) {
     
     char *buf;
-    int len;
+    unsigned int len;
     buf = ioLoadResource(filename, &len);
     if (buf != NULL) {
 
-        int i;
+        unsigned int i;
         for(i = 0; i < len; i++) {
             debugLog("%c", ((char *)buf)[i]);
         }

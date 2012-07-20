@@ -41,7 +41,7 @@ extern int graphicsFrameRate;
 // Lua 
 void luaCheckGameFunction(const char *name);
 const char *luaGetGameConfigString(const char *name);
-const int luaGetGameConfigInteger(const char *name);
+int luaGetGameConfigInteger(const char *name);
 
 int luaEmptyFunction(lua_State *L) {
     return 0;
@@ -59,10 +59,11 @@ bool luax_optboolean(lua_State * L, int idx, bool b) {
 // leaves the function on the stack
 void luaRequire(const char *filename) {
 
+    char *buf;
+    unsigned int len;
+
     debugLog("lua: require \"%s\"\n", filename);
 
-    char *buf;
-    int len;
     buf = ioLoadResource(filename, &len);
     if (buf != NULL) {
         luaL_loadbuffer(L, buf, len, filename);
@@ -89,9 +90,7 @@ void luaError() {
     lua_remove(L, -2);
     lua_call(L, 0, 1);
 
-    const char *stack = lua_tostring(L, -1);
-    debugLog("%s\n - %s\n", stack, err);
-    //exit(1);
+    debugLog("%s\n - %s\n", lua_tostring(L, -1), err);
 
 }
 
@@ -128,12 +127,6 @@ void luaAPI() {
     lua_setfield(L, -2, "reload");
 
     // Configuration
-    // {
-    //  width = 640,
-    //  height = 480,
-    //  title = "Game",
-    //  fps = 60
-    // }
     lua_newtable(L);
     lua_setfield(L, -2, "conf");
     lua_getfield(L, -1, "conf");
@@ -280,7 +273,7 @@ void luaCleanup() {
     lua_call(L, 0, 0);
     lua_pop(L, 1);
 
-	lua_close(L);
+    lua_close(L);
 
 }
 
@@ -316,13 +309,14 @@ const char *luaGetGameConfigString(const char *name) {
 
 }
 
-const int luaGetGameConfigInteger(const char *name) {
+int luaGetGameConfigInteger(const char *name) {
 
+    int number;
     lua_getglobal(L, "game");
     lua_getfield(L, -1, "conf");
     lua_getfield(L, -1, name);
 
-    int number = lua_tointeger(L, -1);
+    number = lua_tointeger(L, -1);
     lua_pop(L, 1);
     lua_pop(L, 1);
 

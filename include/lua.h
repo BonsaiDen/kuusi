@@ -23,9 +23,9 @@
 #define LUA_H
 
 #include <stdio.h>
-#include <lua5.1/lua.h>
-#include <lua5.1/lualib.h>
-#include <lua5.1/lauxlib.h>
+#include "../deps/lua/lua.h"
+#include "../deps/lua/lualib.h"
+#include "../deps/lua/lauxlib.h"
 
 #include "io.h"
 #include "game.h"

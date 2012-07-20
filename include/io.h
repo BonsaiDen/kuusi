@@ -31,7 +31,7 @@
 void ioOpenBundle(const char *filename);
 void ioCloseBundle();
 
-char *ioLoadResource(const char *filename, int *bufSize);
+char *ioLoadResource(const char *filename, unsigned int *bufSize);
 ALLEGRO_BITMAP *ioLoadBitmap(const char *filename);
 ALLEGRO_SAMPLE *ioLoadSample(const char *filename);
 

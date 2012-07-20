@@ -87,13 +87,14 @@ void gameExit(const char *msg) {
 
 void gameLoad() {
     
+    unsigned int i;
+
     debugLog("game: load...\n");
 
     // Init API exposure
     apiInit();
 
     // Setup input state
-    int i;
     for(i = 0; i < ALLEGRO_KEY_MAX; i++) keyStates[i] = 0;
     for(i = 0; i < MAX_MOUSE; i++) mouseStates[i] = 0;
 
@@ -107,15 +108,10 @@ void gameLoad() {
     }
 
     // Init Screen
-    const int w = graphicsWidth * graphicsScale;
-    const int h = graphicsHeight * graphicsScale;
-
-    graphicsDisplay = al_create_display(w, h);
+    graphicsDisplay = al_create_display(graphicsWidth * graphicsScale, graphicsHeight * graphicsScale);
 
     if (graphicsDisplay == NULL) {
-        char *msg = (char*)calloc(sizeof(char), 40);
-        sprintf(msg, "Videomode %dx%d failed.", w, h);
-        gameExit(msg);
+        gameExit("Failed to set display resolution.");
     }
 
     al_set_new_display_option(ALLEGRO_VSYNC, true, ALLEGRO_SUGGEST);
@@ -153,12 +149,12 @@ void gameLoad() {
         gameExit("Failed to initialize sound.");
     }
 
-    ALLEGRO_VOICE *voice = al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
-    ALLEGRO_MIXER *mixer = al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
-    al_attach_mixer_to_voice(mixer, voice);
-    if (!al_set_default_mixer(mixer)) {
-        gameExit("Failed to initialize sound.");
-    }
+    /*ALLEGRO_VOICE *voice = al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);*/
+    /*ALLEGRO_MIXER *mixer = al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);*/
+    /*al_attach_mixer_to_voice(mixer, voice);*/
+    /*if (!al_set_default_mixer(mixer)) {*/
+        /*gameExit("Failed to initialize sound.");*/
+    /*}*/
 
     al_reserve_samples(16);
 	al_init_acodec_addon();
@@ -172,14 +168,13 @@ void gameLoad() {
 
 // Loop -----------------------------------------------------------------------
 void gameLoop() {
-    
-    debugLog("game: loop...\n");
-
-	al_start_timer(stateTimer);
 
     double lastFrameTime = 0, now = 0;
     bool redraw = true;
-    int i = 0;
+    unsigned int i = 0;
+    
+    debugLog("game: loop...\n");
+	al_start_timer(stateTimer);
 
     stateIsRunning = true;
     while (stateIsRunning) {
@@ -266,7 +261,6 @@ void gameLoop() {
                 luaUpdate();
 
                 // Update / Reset Input States
-                int i;
                 for(i = 0; i < ALLEGRO_KEY_MAX; i++) {
                     if (keyStates[i] == 1) {
                         keyStates[i] = 2;
@@ -336,6 +330,14 @@ void gameLoop() {
 
 }
 
+void clearImage(const char *key, void *value) {
+    al_destroy_bitmap(value);
+}
+
+void clearImageTile(const char *key, void *value) {
+    free(value);
+}
+
 void gameCleanup() {
     
     debugLog("game: cleanup...\n");
@@ -349,18 +351,10 @@ void gameCleanup() {
     }
 
     // Free images
-    void clearImage(const char *key, void *value) {
-        al_destroy_bitmap(value);
-    }
-
     graphicsImages->each(graphicsImages, *clearImage);
     graphicsImages->destroy(&graphicsImages);
 
     // Free image tiles
-    void clearImageTile(const char *key, void *value) {
-        free(value);
-    }
-
     graphicsImageTiles->each(graphicsImageTiles, *clearImageTile);
     graphicsImageTiles->destroy(&graphicsImageTiles);
 

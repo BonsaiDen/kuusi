@@ -16,7 +16,7 @@
 -- You should have received a copy of the GNU General Public License along with 
 -- Tuff. If not, see <http://www.gnu.org/licenses/>.                            
 --
-Animation = Animation or class()
+Animation = class('Animation')
 
 function Animation:new(frames, lengths, loop)
 

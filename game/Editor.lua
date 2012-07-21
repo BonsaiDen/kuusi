@@ -16,7 +16,7 @@
 -- You should have received a copy of the GNU General Public License along with 
 -- Tuff. If not, see <http://www.gnu.org/licenses/>.                            
 --
-Editor = Editor or class()
+Editor = class('Editor')
 
 function Editor:new(camera, manager)
     self.camera = camera
@@ -28,6 +28,10 @@ function Editor:new(camera, manager)
     self.hovered = nil
     self.isMoving = false
     self.isSizing = false
+
+    self.create = false
+    self.mouseOffsetX = 0
+    self.mouseOffsetY = 0
 
     self.boxOffsetX = 0
     self.boxOffsetY = 0
@@ -102,14 +106,55 @@ function Editor:update()
         self.edge = 0
         self.isMoving = false
         self.isSizing = false
+
+        if self.create then
+            local x, xs
+            if self.mouseOffsetX > px then
+                x = px
+                xs = self.mouseOffsetX - px
+            else
+                x = self.mouseOffsetX
+                xs = px - self.mouseOffsetX 
+            end
+
+            local y, ys
+            if self.mouseOffsetY > py then
+                y = py
+                ys = self.mouseOffsetY - py
+            else
+                y = self.mouseOffsetY
+                ys = py - self.mouseOffsetY 
+            end
+
+            self.selected = box.Static(x, y, xs, ys)
+            self.isSizing = false
+            self.isMoving = false
+            self.manager:add(self.selected)
+            self.create = false
+
+        end
+
+        self.mouseOffsetX = px
+        self.mouseOffsetY = py
+
+    end
+
+    if keyboard.isDown('lshift') and down then
+        self.create = true
     end
 
     -- Hover boxes
     local x, y, mx, my = self.camera.x, self.camera.y, self.camera.x + game.conf.width, self.camera.y + game.conf.height
+    local hoveredArea = 100000000000
     self.manager:eachIn(x, y, mx, my, function(box)
-        if box:contains(px, py) and not self.hovered and self.edge == 0 then
-            self.hovered = box
-            return true
+        if box:contains(px, py) and self.edge == 0 then
+
+            local area = box.size.x * box.size.y
+            if area < hoveredArea then
+                self.hovered = box
+                hoveredArea = area
+            end
+
         end
     end, true)
 
@@ -238,7 +283,7 @@ function Editor:update()
     end
 
     if keyboard.wasPressed('insert') then
-        self.selected = box.Static(px, py, 32, 32)
+        self.selected = box.Static(px, py, 10, 10)
         self.isSizing = false
         self.isMoving = false
         self.manager:add(self.selected)
@@ -284,6 +329,9 @@ function Editor:render()
 
     end
 
+    if self.create then
+        graphics.rect(self.mouseOffsetX, self.mouseOffsetY, ex - self.mouseOffsetX, ey - self.mouseOffsetY)
+    end
 
     -- draw gui
     graphics.setRenderOffset(-self.camera.x, -self.camera.y)

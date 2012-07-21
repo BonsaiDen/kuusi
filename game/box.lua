@@ -23,8 +23,8 @@
 -- ----------------------------------------------------------------------------
 -- Static AABB Box ------------------------------------------------------------
 -- ----------------------------------------------------------------------------
-local StaticBox = StaticBox or class()
-StaticBox.id = 0
+local StaticBox = class('StaticBox')
+StaticBox.id = StaticBox.id or 0
 
 function StaticBox:new(x, y, w, h, z)
     self.id = StaticBox.id
@@ -126,7 +126,7 @@ end
 -- ----------------------------------------------------------------------------
 -- Static Box Grid ------------------------------------------------------------
 -- ----------------------------------------------------------------------------
-local StaticBoxGrid = StaticBoxGrid or class()
+local StaticBoxGrid = class('StaticBoxGrid')
 function StaticBoxGrid:new(spacing)
     -- this should be bigger then the maximum square size of any dynamic object
     self.spacing = spacing or 64 
@@ -195,7 +195,7 @@ end
 -- ----------------------------------------------------------------------------
 -- Moving AABB Box ------------------------------------------------------------
 -- ----------------------------------------------------------------------------
-local MovingBox = MovingBox or class(StaticBox)
+local MovingBox = class('MovingBox', StaticBox)
 function MovingBox:new(x, y, w, h)
     StaticBox.new(self, x, y, w, h)
 end
@@ -231,7 +231,7 @@ end
 -- ----------------------------------------------------------------------------
 -- Dynamic AABB Box -----------------------------------------------------------
 -- ----------------------------------------------------------------------------
-local DynamicBox = DynamicBox or class(StaticBox)
+local DynamicBox = class('DynamicBox', StaticBox)
 function DynamicBox:new(x, y, w, h)
     StaticBox.new(self, x, y, w, h)
 
@@ -741,7 +741,7 @@ end
 -- ----------------------------------------------------------------------------
 -- Box Manager ----------------------------------------------------------------
 -- ----------------------------------------------------------------------------
-local BoxManager = BoxManager or class()
+local BoxManager = class('BoxManager')
 
 function BoxManager:new()
     self.dynamics = {}
@@ -934,6 +934,8 @@ function BoxManager:eachIn(x, y, mx, my, callback)
                     return true
                 end
                 filtered[box.id] = true
+            else
+                print('id already in use')
             end
         end
     end

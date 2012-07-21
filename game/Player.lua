@@ -19,7 +19,7 @@
 require 'Animation'
 require 'Entity'
 
-Player = Player or class(Entity)
+Player = class('Player', Entity)
 function Player:new(x, y, w, h)
 
     image.load('player.png')
@@ -216,7 +216,7 @@ function Player:draw(debug)
 
     local frame = self.animation:getFrame()
     image.drawTile('player.png', math.round(self.pos.x - 3), 
-                                 math.round(self.pos.y - 7), 
+                                 math.round(self.pos.y - 4), 
                                  frame, self.drawDirection == 1)
     if debug then
         Entity.draw(self, debug)

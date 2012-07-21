@@ -1,6 +1,13 @@
+__class_cache = __class_cache or {}
+
 -- class.lua
 -- Compatible with Lua 5.1 (not 5.0).
-function class(base)
+function class(id, base)
+
+    if __class_cache[id] then
+        return __class_cache[id]
+    end
+
    local c = {}    -- a new class instance
    if type(base) == 'table' then
     -- our new class is a shallow copy of the base class!
@@ -37,6 +44,10 @@ function class(base)
       end
       return false
    end
+
    setmetatable(c, mt)
+   __class_cache[id] = c
+
    return c
+
 end

@@ -18,7 +18,7 @@
 --
 box = require 'box'
 
-Entity = Entity or class(box.Dynamic)
+Entity = class('Entity', box.Dynamic)
 function Entity:new(x, y, w, h)
 
     box.Dynamic.new(self, x, y, w, h)

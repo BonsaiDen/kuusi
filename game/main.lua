@@ -47,7 +47,7 @@ function game.load(arg)
     --game.platform.blocks.left = false
     --game.platform.vel.y = 0.5
 
-    game.player = Player(35, 120, 10, 9)
+    game.player = Player(35, 120, 10, 12)
     game.manager:add(box.Static(0, 140, 140, 50))
 
     local c = box.Static( 50, 110, 60, 1)

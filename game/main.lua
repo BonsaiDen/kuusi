@@ -26,7 +26,7 @@ function game.init(conf)
     conf.title = "Kuusi"
     conf.width = 256
     conf.height = 144
-    conf.scale = 2
+    conf.scale = 3
     conf.fps = 60
 end
 

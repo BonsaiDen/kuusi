@@ -188,7 +188,7 @@ end
 function StaticBoxGrid:get(x, y)
     return self.buckets[self:hash(x, y)] or self.empty
 end
--- End Dynamic ----------------------------------------------------------------
+-- End StaticBoxGrid ----------------------------------------------------------------
 
 
 
@@ -235,7 +235,6 @@ local DynamicBox = DynamicBox or class(StaticBox)
 function DynamicBox:new(x, y, w, h)
     StaticBox.new(self, x, y, w, h)
 
-    -- TODO these should to be lists 
     self.oldSurface = {
         up = nil,
         right = nil,
@@ -248,6 +247,13 @@ function DynamicBox:new(x, y, w, h)
         right = nil,
         down = nil,
         left = nil
+    }
+
+    self.contactSurfaceArea= {
+        up = 0,
+        right = 0,
+        down = 0,
+        left = 0
     }
 
     self.contactArea = {
@@ -263,9 +269,14 @@ function DynamicBox:new(x, y, w, h)
         down = nil,
         left = nil
     }
+
+    self.inside = nil
+    self.insideArea = 0
+
 end
 
 function DynamicBox:beforeUpdate(dt)
+
     self.oldSurface.up = self.contactSurface.up
     self.oldSurface.down = self.contactSurface.down
     self.oldSurface.right = self.contactSurface.right
@@ -276,6 +287,11 @@ function DynamicBox:beforeUpdate(dt)
     self.impactSurface.right = nil
     self.impactSurface.left = nil
 
+    self.contactSurfaceArea.up = 0
+    self.contactSurfaceArea.down = 0
+    self.contactSurfaceArea.right = 0
+    self.contactSurfaceArea.left = 0
+
     self.contactSurface.up = nil
     self.contactSurface.down = nil
     self.contactSurface.right = nil
@@ -285,6 +301,10 @@ function DynamicBox:beforeUpdate(dt)
     self.contactArea.down = 0
     self.contactArea.right = 0
     self.contactArea.left = 0
+
+    self.inside = nil
+    self.insideArea = 0
+
 end
 
 function DynamicBox:update(dt)
@@ -507,12 +527,23 @@ function DynamicBox:sweep(other, otherVel)
             area = math.min(math.min(a.size.x, b.size.x), area)
 
             if a.max.y == b.min.y and b.blocks.up then
-                self.contactSurface.down = b
+
+                if area > self.contactSurfaceArea.down then
+                    self.contactSurface.down = b
+                    self.contactSurfaceArea.down = area
+                end
+
                 self.contactArea.down = self.contactArea.down + area
 
             elseif a.min.y == b.max.y and b.blocks.down then
-                self.contactSurface.up = b
+
+                if area > self.contactSurfaceArea.up then
+                    self.contactSurface.up = b
+                    self.contactSurfaceArea.up = area
+                end
+
                 self.contactArea.up = self.contactArea.up + area
+
             end
         end
 
@@ -532,12 +563,23 @@ function DynamicBox:sweep(other, otherVel)
             area = math.min(math.min(a.size.y, b.size.y), area)
 
             if a.max.x == b.min.x and b.blocks.right then
-                self.contactSurface.right = b
+
+                if area > self.contactSurfaceArea.right then
+                    self.contactSurface.right = b
+                    self.contactSurfaceArea.right = area
+                end
+
                 self.contactArea.right = self.contactArea.right + area
 
             elseif a.min.x == b.max.x and b.blocks.left then
-                self.contactSurface.left = b
+
+                if area > self.contactSurfaceArea.left then
+                    self.contactSurface.left = b
+                    self.contactSurfaceArea.left = area
+                end
+
                 self.contactArea.left = self.contactArea.left + area
+
             end
         end
 
@@ -653,11 +695,6 @@ function DynamicBox:sweep(other, otherVel)
         outVel.y = 0
     end
 
-
-    -- more crazy stuff
-    --if outVel.y < 0 and  and not b.blocks.down then
-    --end
-
     -- final correction for ghosting artifacts
     if outVel.y ~= 0 and not (a.min.x < b.max.x and a.max.x > b.min.x) then
 
@@ -685,6 +722,13 @@ function DynamicBox:sweep(other, otherVel)
             outVel.x = 0
         end
 
+    end
+
+    -- keep track of the biggest overlapping rectangle
+    local area = a:overlapArea(b)
+    if area > a.insideArea then
+        a.insideArea = area
+        a.inside = b
     end
 
     return true, outVel, hitNormal 

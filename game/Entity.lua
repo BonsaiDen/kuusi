@@ -28,6 +28,7 @@ function Entity:new(x, y, w, h)
     self.jumpForce = 0
     self.jumpDecelaration = 0
     self.movement = { x = 0, y = 0} 
+    self.waterDepth = 0
 
     self.maxFallSpeed = 3
     self:fall(self.maxFallSpeed, 0.35)
@@ -62,6 +63,13 @@ end
 
 function Entity:update(dt)
     
+    if self.inside and self.inside.isWater then
+        self.waterDepth = math.min((self.max.y - 2) - self.inside.min.y, 15)
+
+    else
+        self.waterDepth = nil
+    end
+
     box.Dynamic.update(self, dt)
 
     -- jump forces and gravity are handles differently
@@ -103,11 +111,10 @@ function Entity:update(dt)
         self.movement.y = 0
         if self.inside and self.inside.isWater then
 
-            local depth = math.min((self.max.y - 2) - self.inside.min.y, 15)
             self.gravity = self.gravity * 0.97
-            self.vel.y = -(0.1 * depth) + self.gravity + (self.movement.y * dt)
+            self.vel.y = -(0.1 * self.waterDepth) + self.gravity + (self.movement.y * dt)
 
-            if depth <= 1 and math.abs(self.vel.y) < 0.1 then
+            if self.waterDepth <= 1 and math.abs(self.vel.y) < 0.1 then
                 self.vel.y = 0
             end
 

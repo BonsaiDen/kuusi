@@ -29,10 +29,17 @@ function Player:new(x, y, w, h)
 
     self.animations = {
         idle = Animation({ 1, 2, 1, 2, 1, 3, 1, 2, 1, 2, 1 }, { 2.5, 0.15, 2, 0.1, 3, 0.6, 2, 0.10, 0.25, 0.10, 4 }, true),
-        run = Animation({ 9, 10, 11, 12 }, { 0.035, 0.06, 0.045, 0.06 }, true),
+        run = Animation({ 9, 10, 11, 12 }, { 0.045, 0.07, 0.055, 0.07 }, true),
+
+        swim = Animation({ 9, 10, 11, 12 }, { 0.07, 0.12, 0.09, 0.12 }, true),
+
         sleep = Animation({ 17, 18, 19, 20 }, { 0.9, 1.1, 1.2, 1.1 }, true),
         jump = Animation({ 25, 26 }, { 0.25, 1 }),
         fall = Animation({ 27, 28 }, { 0.25, 1 }),
+
+        rise = Animation({ 25, 26 }, { 1, 1 }),
+        dive = Animation({ 27, 28 }, { 0.25, 1 }),
+
         wallSlide = Animation({33, 34, 35}, {0.10, 0.15, 1})
     }
 
@@ -47,9 +54,9 @@ function Player:new(x, y, w, h)
 
     self.slideStart = 0
     self.drawDirection = self.direction
-    self.maxSpeed = 85
-    self.accSpeed = 13
-    self.decSpeed = 16
+    self.maxSpeed = 70
+    self.accSpeed = 11
+    self.decSpeed = 15
 
     self.pos.z = -1
 
@@ -62,7 +69,7 @@ function Player:update(dt)
     local now = game.getTime()
     self.animation:update(dt)
 
-    if self.contactSurface.up then
+    if self.contactSurface.up and not inWater then
         self.jumpForce = 0
         self.gravity = 0
     end
@@ -138,6 +145,30 @@ function Player:update(dt)
 
         self.slideStart = 0
 
+    -- under / in water
+    elseif inWater then
+
+        if self.movement.x ~= 0 then
+            self.animation = self.animations.swim
+
+        else
+            self.animations.swim:reset()
+            self.animation = self.animations.idle
+        end
+
+        -- dive / rise
+        if self.vel.y > 0 then
+            self.animation = self.animations.dive
+
+        elseif self.vel.y < 0 then
+            self.animation = self.animations.rise
+
+        else
+            self.animations.dive:reset()
+            self.animations.rise:reset()
+        end
+
+    -- normal fall
     elseif self.vel.y > 0 then
         self.animation = self.animations.fall
         self.lastMove = now
@@ -160,6 +191,10 @@ function Player:update(dt)
             jump = true
 
         elseif self.contactSurface.down then
+            self.jumpSpeed = 2.20
+            jump = true
+
+        elseif inWater and self.waterDepth < 6 then
             self.jumpSpeed = 2.20
             jump = true
         end
@@ -192,8 +227,9 @@ function Player:update(dt)
     end
 
     -- Fall asleep after some time
-    if now - self.lastMove > 25.0 then
+    if now - self.lastMove > 25.0 and not inWater then
         self.animation = self.animations.sleep
+
     else
         self.animations.sleep:reset()
     end

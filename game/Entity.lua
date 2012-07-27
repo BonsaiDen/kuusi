@@ -81,7 +81,10 @@ function Entity:update(dt)
         -- check whether we're falling
         if not self.contactSurface.down then
 
-            self.gravity = self.gravity + self.gravityAcceleration
+            if not self.inside then
+                self.gravity = self.gravity + self.gravityAcceleration
+            end
+
             if self.gravity > self.maxFallSpeed then
                 self.gravity = self.maxFallSpeed
             end
@@ -97,12 +100,26 @@ function Entity:update(dt)
 
         end
 
-        self.vel.y = (self.movement.y * dt) + self.gravity 
+        self.movement.y = 0
+        if self.inside and self.inside.isWater then
+
+            local depth = math.min((self.max.y - 2) - self.inside.min.y, 15)
+            self.gravity = self.gravity * 0.97
+            self.vel.y = -(0.1 * depth) + self.gravity + (self.movement.y * dt)
+
+            if depth <= 1 and math.abs(self.vel.y) < 0.1 then
+                self.vel.y = 0
+            end
+
+        else
+            self.vel.y = (self.movement.y * dt) + self.gravity 
+        end
 
     end
 
     -- check for platform and x velocity to include platform x velocity
     self.vel.x = (self.movement.x * dt)
+
     if self.contactSurface.down and self.contactSurface.down:is_a(box.Moving) then
 
         local mx = self.contactSurface.down.vel.x

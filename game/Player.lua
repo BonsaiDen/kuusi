@@ -33,8 +33,11 @@ function Player:new(x, y, w, h)
         sleep = Animation({ 17, 18, 19, 20 }, { 0.9, 1.1, 1.2, 1.1 }, true),
         jump = Animation({ 25, 26 }, { 0.25, 1 }),
         fall = Animation({ 27, 28 }, { 0.25, 1 }),
-        wallSlide = Animation({33, 34, 35}, {0.11, 0.11, 1})
+        wallSlide = Animation({33, 34, 35}, {0.10, 0.15, 1})
     }
+
+    self.lastJump = game.getTime()
+    self.jumpSpeed = 0
 
     self.animation = self.animations.idle
     self.lastMove = game.getTime()
@@ -54,6 +57,8 @@ end
 
 function Player:update(dt)
 
+    local inWater = self.inside and self.inside.isWater
+
     local now = game.getTime()
     self.animation:update(dt)
 
@@ -64,7 +69,9 @@ function Player:update(dt)
 
     -- Movement
     local moved = false
-    local dec = self.decSpeed
+    local dec = inWater and self.decSpeed * 0.10 or self.decSpeed
+    local acc = inWater and self.accSpeed * 0.25 or self.accSpeed
+    local max = inWater and self.maxSpeed * 0.5 or self.maxSpeed
 
     if keyboard.wasPressed('left') then
         self.direction = -1
@@ -83,11 +90,11 @@ function Player:update(dt)
         end
 
         if keyboard.isDown('left') and not self.contactSurface.left then
-            self.movement.x = math.max(self.movement.x - self.accSpeed, -self.maxSpeed)
+            self.movement.x = math.max(self.movement.x - acc, -max)
             moved = true
 
         elseif keyboard.isDown('right') and not self.contactSurface.right then
-            self.movement.x = math.min(self.movement.x + self.accSpeed, self.maxSpeed)
+            self.movement.x = math.min(self.movement.x + acc, max)
             moved = true
         end
 
@@ -138,7 +145,7 @@ function Player:update(dt)
 
     -- impacts
     if self.impactSurface.down then
-        --print('hit ground')
+        --print('hit ground', now - self.lastJump)
     end
 
     -- Jumping
@@ -146,25 +153,42 @@ function Player:update(dt)
 
         local jump = false
         if now - self.lastWallContact <= 0.1 and self.direction == self.lastWallDirection then
-            self.movement.x = 170 * self.direction
+            self.movement.x = 150 * self.direction
             self.lastWallJump = now
             self.lastWallContact = -10
+            self.jumpSpeed = 1.9
             jump = true
 
         elseif self.contactSurface.down then
+            self.jumpSpeed = 2.20
             jump = true
         end
 
         if jump then
+            -- check for platform and correct jump force to include platform y velocity
+            --if self.contactSurface.down and self.contactSurface.down:is_a(box.Moving) then
+            --    self.jumpForce = self.jumpForce + self.contactSurface.down.vel.y
+            --end
+
             self.slideStart = 0
             self.animations.idle:reset()
             self.animations.fall:reset()
             self.animations.run:reset()
             self.animations.jump:reset()
             self.animation = self.animations.jump
-            self:jump(30, 0.3)
+            self.jumpDecelaration = 0.30
+            self.lastJump = game.getTime()
             self.lastMove = now
         end
+    end
+
+    if keyboard.isDown('s') then
+        if now - self.lastJump <= 0.19 then
+            self.jumpForce = -self.jumpSpeed
+        end
+
+    else
+        self.lastJump = 0
     end
 
     -- Fall asleep after some time
@@ -177,37 +201,45 @@ function Player:update(dt)
     Entity.update(self, dt)
 
     -- Wall sliding / jumps
-    if self.vel.y > 0.20 and (self.slideStart == 0 or now - self.slideStart < 0.3) then
+    if not inWater then
 
-        if keyboard.isDown('right') and self.contactSurface.right and not self.contactSurface.left and self.contactArea.right == self.size.y then
-            self.drawDirection = -1
-            self.lastWallDirection = -1
-            self.animation = self.animations.wallSlide
-            self.lastWallContact = now
+        if self.vel.y > 0.20 and (self.slideStart == 0 or now - self.slideStart < 0.4) then
 
-            if self.slideStart == 0 then
-                self.slideStart = now
+            if keyboard.isDown('right') and self.contactSurface.right and not self.contactSurface.left and self.contactArea.right == self.size.y then
+                self.drawDirection = -1
+                self.lastWallDirection = -1
+                self.animation = self.animations.wallSlide
+                self.lastWallContact = now
+
+                if self.slideStart == 0 then
+                    self.slideStart = now
+                end
+
+            elseif keyboard.isDown('left') and self.contactSurface.left and not self.contactSurface.right and self.contactArea.left == self.size.y then
+                self.drawDirection = 1
+                self.lastWallDirection = 1
+                self.animation = self.animations.wallSlide
+                self.lastWallContact = now
+
+                if self.slideStart == 0 then
+                    self.slideStart = now
+                end
+
+            else
+                self.animations.wallSlide:reset()
             end
-
-        elseif keyboard.isDown('left') and self.contactSurface.left and not self.contactSurface.right and self.contactArea.left == self.size.y then
-            self.drawDirection = 1
-            self.lastWallDirection = 1
-            self.animation = self.animations.wallSlide
-            self.lastWallContact = now
-
-            if self.slideStart == 0 then
-                self.slideStart = now
-            end
-
-        else
-            self.animations.wallSlide:reset()
+            
         end
-        
-    end
 
-    if self.slideStart ~= 0 then
-        local t = 1 - math.min(now - self.slideStart, 0.3) * 3.33
-        self.vel.y = self.vel.y * (1 - 0.7 * t)
+        -- slide along vertical surfaces
+        if self.slideStart ~= 0 then
+            local t = 1 - math.min(now - self.slideStart, 0.4) * 2.5
+            self.vel.y = self.vel.y * (1 - 0.9 * t)
+            if now - self.slideStart < 0.1 then
+                self.vel.y = self.vel.y * 0.25
+            end
+        end
+
     end
 
 end

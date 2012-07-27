@@ -22,6 +22,29 @@ box = require 'box'
 require 'Player'
 require 'Editor'
 
+
+WaterBox = class('WaterBox', box.Static)
+function WaterBox:new(x, y, w, h)
+
+    box.Static.new(self, x, y, w, h)
+    self.isWater = true
+    self.blocks = {
+        up = false,
+        right = false,
+        down = false,
+        left = false
+    }
+    self.pos.z = 2
+
+end
+
+function WaterBox:draw()
+    local t = math.max(0, math.cos(game.getTime()) + 1)
+    graphics.setColor(16 + 16 * t / 2, 16 + 16 * t / 2, 255, 0.5 - t / 10)
+    graphics.rect(self.pos.x, self.pos.y, self.size.x, self.size.y, true)
+end
+
+
 function game.init(conf)
     conf.title = "Kuusi"
     conf.width = 256
@@ -63,6 +86,8 @@ function game.load(arg)
     game.manager:add(box.Static(0, 100, 30, 40))
     game.manager:add(box.Static(200, 0, 50, 50))
     game.manager:add(box.Static(0, 280, 320, 4))
+
+    game.manager:add(WaterBox(10, 10, 240, 240))
 
     --game.manager:add(game.platform)
     game.manager:add(game.player)

@@ -63,11 +63,13 @@ end
 
 function Entity:update(dt)
     
+    -- figure out the water depth
+    local inWater = false
     if self.inside and self.inside.isWater then
-        self.waterDepth = math.min((self.max.y - 2) - self.inside.min.y, 15)
-
+        self.waterDepth = math.min((self.max.y - 3) - self.inside.min.y, 15)
+        inWater = true
     else
-        self.waterDepth = nil
+        self.waterDepth = -1
     end
 
     box.Dynamic.update(self, dt)
@@ -76,8 +78,15 @@ function Entity:update(dt)
     -- this makes the whole system easier and more friendly to gameplay tweaking
     if self.jumpForce < self.maxFallSpeed and self.jumpDecelaration ~= 0 then
         self.jumpForce = self.jumpForce + self.jumpDecelaration 
-        self.vel.y = (self.movement.y * dt) + self.jumpForce
-        self.gravity = self.jumpForce
+
+        -- jumps should not make us move downwards in water, gravity will do that
+        if self.waterDepth > 0 and self.jumpForce > 0 then
+            self.vel.y = (self.movement.y * dt) 
+            self.gravity = 0
+        else
+            self.vel.y = (self.movement.y * dt) + self.jumpForce
+            self.gravity = self.jumpForce
+        end
 
         if self.contactSurface.down and self.vel.y > 0 then
             self.jumpForce = 0
@@ -99,20 +108,26 @@ function Entity:update(dt)
 
         else
 
-            self.gravity = 0.0001
+            if not inWater then
 
-            -- check for platforms and make the entity move downwards with them
-            if self.contactSurface.down:is_a(box.Moving) then
-                self.gravity = self.contactSurface.down.vel.y
+                self.gravity = 0.0001
+
+                -- check for platforms and make the entity move downwards with them
+                if self.contactSurface.down:is_a(box.Moving) then
+                    self.gravity = self.contactSurface.down.vel.y
+                end
+
+            else
+                self.gravity = self.gravity * 0.85
             end
 
         end
 
-        self.movement.y = 0
-        if self.inside and self.inside.isWater then
+        -- in water stuff
+        if inWater then
 
             self.gravity = self.gravity * 0.97
-            self.vel.y = -(0.1 * self.waterDepth) + self.gravity + (self.movement.y * dt)
+            self.vel.y = -(0.075 * self.waterDepth) + self.gravity + (self.movement.y * dt)
 
             if self.waterDepth <= 1 and math.abs(self.vel.y) < 0.1 then
                 self.vel.y = 0

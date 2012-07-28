@@ -38,7 +38,7 @@ function Player:new(x, y, w, h)
         fall = Animation({ 27, 28 }, { 0.25, 1 }),
 
         rise = Animation({ 25, 26 }, { 1, 1 }),
-        dive = Animation({ 27, 28 }, { 0.25, 1 }),
+        dive = Animation({ 28, 27 }, { 0.5, 1 }),
 
         wallSlide = Animation({33, 34, 35}, {0.10, 0.15, 1})
     }
@@ -64,7 +64,7 @@ end
 
 function Player:update(dt)
 
-    local inWater = self.inside and self.inside.isWater
+    local inWater = self.inside and self.inside.isWater and self.waterDepth >= 0
 
     local now = game.getTime()
     self.animation:update(dt)
@@ -160,7 +160,7 @@ function Player:update(dt)
         if self.vel.y > 0 then
             self.animation = self.animations.dive
 
-        elseif self.vel.y < 0 then
+        elseif self.vel.y < -0.15 then
             self.animation = self.animations.rise
 
         else

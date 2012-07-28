@@ -47,6 +47,10 @@ function Editor:update()
     local ox, oy = graphics.getRenderOffset()
     graphics.setRenderOffset(-self.camera.x, -self.camera.y)
 
+    if keyboard.wasPressed('escape') then
+        self.selected = nil
+    end
+
     -- Camera / Box movement
     local moveBy = keyboard.isDown('lshift') and 16 or 1
     local down = mouse.isDown('l')
@@ -205,6 +209,13 @@ function Editor:update()
             }
         end
 
+        if keyboard.wasPressed('pgup') then
+            self.selected.pos.z = self.selected.pos.z + 1
+
+        elseif keyboard.wasPressed('pgdn') then
+            self.selected.pos.z = self.selected.pos.z - 1
+        end
+
         -- moving
         if down then
             if self.edge == 0 then
@@ -302,15 +313,15 @@ function Editor:render()
     local ex, ey = mouse.getPosition()
     if self.hovered then
         local box = self.hovered
-        graphics.setColor(0, 255, 0)
-        graphics.rect(box.pos.x - 1, box.pos.y - 1, box.size.x + 2, box.size.y + 2)
+        graphics.setColor(0, 255, 0, 0.25)
+        graphics.rect(box.pos.x, box.pos.y, box.size.x, box.size.y)
     end
 
     if self.selected then
 
         local box = self.selected
-        graphics.setColor(200, 200, 0)
-        graphics.rect(box.pos.x - 1, box.pos.y - 1, box.size.x + 2, box.size.y + 2)
+        graphics.setColor(200, 200, 0, 0.25)
+        graphics.rect(box.pos.x, box.pos.y, box.size.x, box.size.y)
 
         graphics.setColor(0, 0, 200)
 

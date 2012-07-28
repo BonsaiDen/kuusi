@@ -39,8 +39,8 @@ function WaterBox:new(x, y, w, h)
 end
 
 function WaterBox:draw()
-    local t = math.max(0, math.cos(game.getTime()) + 1)
-    graphics.setColor(16 + 16 * t / 2, 16 + 16 * t / 2, 255, 0.5 - t / 10)
+    local t = math.max(0, math.cos(game.getTime()) + 1) / 2
+    graphics.setColor(16 + 32 * t / 2, 16 + 32 * t / 2, 255, 0.90 - t / 10)
     graphics.rect(self.pos.x, self.pos.y, self.size.x, self.size.y, true)
 end
 

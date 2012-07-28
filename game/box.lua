@@ -90,7 +90,7 @@ end
 
 function StaticBox:draw(debug)
 
-    local c = 160 - self.pos.z * 10
+    local c = 160 + self.pos.z * 10
     graphics.setColor(c, c, c)
     graphics.rect(self.pos.x, self.pos.y, self.size.x, self.size.y)
 

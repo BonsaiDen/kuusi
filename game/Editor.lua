@@ -54,43 +54,44 @@ function Editor:update()
     -- Camera / Box movement
     local moveBy = keyboard.isDown('lshift') and 16 or 1
     local down = mouse.isDown('l')
+    local ctrl = keyboard.isDown('lctrl')
     if keyboard.wasPressed('left') then
-        if not self.selected or down then
+        if not self.selected or down or ctrl then
             self.camera.x = self.camera.x - game.conf.width
             moveBy = game.conf.width
         end
 
-        if self.selected then
+        if self.selected and not ctrl then
             self.selected:setPosition(self.selected.pos.x - moveBy, self.selected.pos.y)
         end
 
     elseif keyboard.wasPressed('right') then
-        if not self.selected or down then
+        if not self.selected or down or ctrl then
             self.camera.x = self.camera.x + game.conf.width
             moveBy = game.conf.width
         end
 
-        if self.selected then
+        if self.selected and not ctrl then
             self.selected:setPosition(self.selected.pos.x + moveBy, self.selected.pos.y)
         end
 
     elseif keyboard.wasPressed('up') then
-        if not self.selected or down then
+        if not self.selected or down or ctrl then
             self.camera.y = self.camera.y - game.conf.height
             moveBy = game.conf.height
         end
 
-        if self.selected then
+        if self.selected and not ctrl then
             self.selected:setPosition(self.selected.pos.x, self.selected.pos.y - moveBy)
         end
 
     elseif keyboard.wasPressed('down') then
-        if not self.selected or down then
+        if not self.selected or down or ctrl then
             self.camera.y = self.camera.y + game.conf.height
             moveBy = game.conf.height
         end
 
-        if self.selected then
+        if self.selected and not ctrl then
             self.selected:setPosition(self.selected.pos.x, self.selected.pos.y + moveBy)
         end
     end

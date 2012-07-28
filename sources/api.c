@@ -121,16 +121,16 @@ static const char *keyNames[ALLEGRO_KEY_MAX] = {
 };
 
 static int getKeyCodeFromName(const char *s) {
-   int i;
+    int i;
 
-   /* Some key names are not intuitive, but this is all we've got. */
-   for (i = 1; i < ALLEGRO_KEY_MAX; i++) {
-      if (0 == strcasecmp(s, keyNames[i])) {
-         return i;
-      }
-   }
+    /* Some key names are not intuitive, but this is all we've got. */
+    for (i = 1; i < ALLEGRO_KEY_MAX; i++) {
+       if (strcasecmp(s, keyNames[i]) == 0) {
+          return i;
+       }
+    }
 
-   return 0;
+    return 0;
 
 }
 

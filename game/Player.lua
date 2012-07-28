@@ -31,8 +31,6 @@ function Player:new(x, y, w, h)
         idle = Animation({ 1, 2, 1, 2, 1, 3, 1, 2, 1, 2, 1 }, { 2.5, 0.15, 2, 0.1, 3, 0.6, 2, 0.10, 0.25, 0.10, 4 }, true),
         run = Animation({ 9, 10, 11, 12 }, { 0.045, 0.07, 0.055, 0.07 }, true),
 
-        swim = Animation({ 9, 10, 11, 12 }, { 0.07, 0.12, 0.09, 0.12 }, true),
-
         sleep = Animation({ 17, 18, 19, 20 }, { 0.9, 1.1, 1.2, 1.1 }, true),
         jump = Animation({ 25, 26 }, { 0.25, 1 }),
         fall = Animation({ 27, 28 }, { 0.25, 1 }),
@@ -40,7 +38,18 @@ function Player:new(x, y, w, h)
         rise = Animation({ 25, 26 }, { 1, 1 }),
         dive = Animation({ 28, 27 }, { 0.5, 1 }),
 
-        wallSlide = Animation({33, 34, 35}, {0.10, 0.15, 1})
+        wallSlide = Animation({33, 34, 35}, {0.10, 0.15, 1}),
+
+        swimIdle = Animation({ 41, 42, 43, 42,  41, 42, 43, 42,  41, 42, 43, 42, 
+                               44, 45, 46, 42,  41, 42, 43, 42,  41, 42, 43, 42, 
+                               47, 41,  42,  48, 43,  42 }, 
+
+                             { 0.5, 0.5, 0.5, 0.5,  0.5, 0.5, 0.5, 0.5,  0.5, 0.5, 0.5, 0.5,
+                               0.5, 0.5, 0.5, 0.5,  0.5, 0.5, 0.5, 0.5,  0.5, 0.5, 0.5, 0.5,
+                               0.2, 0.3,  0.5,  0.2, 0.3,  0.5 }, true),
+
+        swim = Animation({ 49, 50, 51, 52 }, { 0.07, 0.12, 0.09, 0.12 }, true)
+
     }
 
     self.lastJump = game.getTime()
@@ -153,7 +162,7 @@ function Player:update(dt)
 
         else
             self.animations.swim:reset()
-            self.animation = self.animations.idle
+            self.animation = self.animations.swimIdle
         end
 
         -- dive / rise
@@ -174,13 +183,18 @@ function Player:update(dt)
         self.lastMove = now
     end
 
+    if not inWater then
+        self.animations.swim:reset()
+        self.animations.swimIdle:reset()
+    end
+
     -- impacts
     if self.impactSurface.down then
         --print('hit ground', now - self.lastJump)
     end
 
     -- Jumping
-    if keyboard.wasPressed('s') and not self.contactSurface.up then
+    if keyboard.wasPressed('s') and not self.contactSurface.up and not keyboard.isDown('down') then
 
         local jump = false
         if now - self.lastWallContact <= 0.1 and self.direction == self.lastWallDirection then
@@ -206,6 +220,10 @@ function Player:update(dt)
             --end
 
             self.slideStart = 0
+            self.animations.rise:reset()
+            self.animations.dive:reset()
+            self.animations.swim:reset()
+            self.animations.swimIdle:reset()
             self.animations.idle:reset()
             self.animations.fall:reset()
             self.animations.run:reset()

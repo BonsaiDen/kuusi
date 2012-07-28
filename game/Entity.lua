@@ -66,7 +66,7 @@ function Entity:update(dt)
     -- figure out the water depth
     local inWater = false
     if self.inside and self.inside.isWater then
-        self.waterDepth = math.min((self.max.y - 3) - self.inside.min.y, 15)
+        self.waterDepth = math.min((self.max.y - 4) - self.inside.min.y, 15)
         inWater = true
     else
         self.waterDepth = -1

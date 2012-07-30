@@ -403,7 +403,13 @@ static int graphicsDrawCircle(lua_State *L) {
 }
 
 static int graphicsSetScale(lua_State *L) {
-    graphicsScale = luaL_checkinteger(L, 1);
+
+    int s = luaL_checkinteger(L, 1);
+    if (s != graphicsScale) {
+        graphicsScale = s;
+        graphicsResized = true;
+    }
+
     return 0;
 }
 
@@ -413,9 +419,17 @@ static int graphicsGetScale(lua_State *L) {
 }
 
 static int graphicsSetSize(lua_State *L) {
-    graphicsWidth = luaL_checkinteger(L, 1);
-    graphicsHeight = luaL_checkinteger(L, 2);
+
+    int w = luaL_checkinteger(L, 1);
+    int h = luaL_checkinteger(L, 2);
+    if (w != graphicsWidth || h != graphicsHeight) {
+        graphicsWidth = w;
+        graphicsHeight = h;
+        graphicsResized = true;
+    }
+
     return 0;
+
 }
 
 static int graphicsGetSize(lua_State *L) {

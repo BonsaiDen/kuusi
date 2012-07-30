@@ -58,6 +58,7 @@ const char* graphicsTitle = "";
 int graphicsWidth = 0;
 int graphicsHeight = 0;
 int graphicsScale = 0;
+bool graphicsResized = false;
 int graphicsFrameRate = 60;
 int graphicsLineWidth = 1;
 ALLEGRO_COLOR graphicsColor;
@@ -303,6 +304,27 @@ void gameLoop() {
         // Render it out
 		if (redraw && al_is_event_queue_empty(stateEventQueue)) {
 
+            // Handle resizing
+            if (graphicsResized) {
+
+                al_resize_display(graphicsDisplay, graphicsWidth * graphicsScale, graphicsHeight * graphicsScale);
+
+                if (graphicsBackground != NULL) {
+                    al_destroy_bitmap(graphicsBackground);
+                }
+
+                if (graphicsScale != 1) {
+                    graphicsBackground = al_create_bitmap(graphicsWidth, graphicsHeight);
+                    al_set_target_bitmap(graphicsBackground);
+
+                } else {
+                    al_set_target_bitmap(al_get_backbuffer(graphicsDisplay));
+                }
+
+                graphicsResized = false;
+
+            }
+
             if (graphicsScale != 1) {
                 al_set_target_bitmap(graphicsBackground);
             }
@@ -346,7 +368,7 @@ void gameCleanup() {
 	al_destroy_timer(stateTimer);
 	al_destroy_display(graphicsDisplay);
 
-    if (graphicsScale != 1) {
+    if (graphicsBackground != NULL) {
         al_destroy_bitmap(graphicsBackground);
     }
 

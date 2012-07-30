@@ -78,6 +78,7 @@ extern const char* graphicsTitle;
 extern int graphicsWidth;
 extern int graphicsHeight;
 extern int graphicsScale;
+extern bool graphicsResized;
 extern int graphicsFrameRate;
 extern int graphicsLineWidth;
 extern ALLEGRO_COLOR graphicsColor;

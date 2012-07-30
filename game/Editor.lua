@@ -45,7 +45,7 @@ end
 function Editor:update()
     
     local ox, oy = graphics.getRenderOffset()
-    graphics.setRenderOffset(-self.camera.x, -self.camera.y)
+    graphics.setRenderOffset(-self.camera.x + 16, -self.camera.y + 16)
 
     if keyboard.wasPressed('escape') then
         self.selected = nil
@@ -131,7 +131,7 @@ function Editor:update()
                 ys = py - self.mouseOffsetY 
             end
 
-            self.selected = box.Static(x, y, xs, ys)
+            self.selected = Block(x, y, xs, ys)
             self.isSizing = false
             self.isMoving = false
             self.manager:add(self.selected)
@@ -284,6 +284,14 @@ function Editor:update()
             end
         end
 
+        -- block types
+        if keyboard.wasPressed('w') then
+            self.selected:setType('water')
+
+        elseif keyboard.wasPressed('s') then
+            self.selected:setType('solid')
+        end
+
         -- delete
         if keyboard.wasPressed('delete') then
             self.manager:remove(self.selected)
@@ -295,7 +303,7 @@ function Editor:update()
     end
 
     if keyboard.wasPressed('insert') then
-        self.selected = box.Static(px, py, 10, 10)
+        self.selected = Block(px, py, 10, 10)
         self.isSizing = false
         self.isMoving = false
         self.manager:add(self.selected)
@@ -309,7 +317,12 @@ end
 function Editor:render()
     
     local ox, oy = graphics.getRenderOffset()
-    graphics.setRenderOffset(-self.camera.x, -self.camera.y)
+
+    graphics.setRenderOffset(0, 0)
+
+    graphics.setColor(220, 100, 0, 0.25)
+    graphics.rect(16 - 1, 16 - 1, 256 + 2, 144 + 2)
+    graphics.setRenderOffset(-self.camera.x + 16, -self.camera.y + 16)
 
     local ex, ey = mouse.getPosition()
     if self.hovered then

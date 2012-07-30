@@ -23,25 +23,43 @@ require 'Player'
 require 'Editor'
 
 
-WaterBox = class('WaterBox', box.Static)
-function WaterBox:new(x, y, w, h)
-
+-- test debug stuff
+Block = class('Block', box.Static)
+function Block:new(x, y, w, h)
     box.Static.new(self, x, y, w, h)
-    self.isWater = true
-    self.blocks = {
-        up = false,
-        right = false,
-        down = false,
-        left = false
-    }
-    self.pos.z = 2
+    self.isFluid = false
+end
+
+function Block:setType(typ)
+
+    if typ == 'water' then
+        self.isFluid = true
+        self.blocks.left = false
+        self.blocks.up = false
+        self.blocks.down = false
+        self.blocks.right = false
+
+    else
+        self.isFluid = true
+        self.blocks.left = true
+        self.blocks.up = true
+        self.blocks.down = true
+        self.blocks.right = true
+    end
 
 end
 
-function WaterBox:draw()
-    local t = math.max(0, math.cos(game.getTime()) + 1) / 2
-    graphics.setColor(16 + 32 * t / 2, 16 + 32 * t / 2, 255, 0.90 - t / 10)
-    graphics.rect(self.pos.x, self.pos.y, self.size.x, self.size.y, true)
+function Block:draw(debug)
+
+    if self.isFluid then
+        local t = math.max(0, math.cos(game.getTime()) + 1) / 2
+        graphics.setColor(16 + 32 * t / 2, 16 + 32 * t / 2, 255, 0.90 - t / 10)
+        graphics.rect(self.pos.x, self.pos.y, self.size.x, self.size.y, true)
+
+    else
+        box.Static.draw(self, debug)
+    end
+
 end
 
 
@@ -64,36 +82,38 @@ function game.load(arg)
     }
 
     game.manager = box.Manager()
-    --game.platform = box.Moving(100, 130,  50, 9)
-    --game.platform.blocks.down = false
-    --game.platform.blocks.right = false
-    --game.platform.blocks.left = false
-    --game.platform.vel.y = 0.5
+    game.platform = box.Moving(100, 130,  50, 9)
+    game.platform.blocks.down = false
+    game.platform.blocks.right = false
+    game.platform.blocks.left = false
+    game.platform.vel.y = -1
 
     game.player = Player(35, 120, 10, 12)
-    game.manager:add(box.Static(0, 140, 140, 50))
+    game.manager:add(Block(0, 140, 140, 50))
 
-    local c = box.Static( 50, 110, 60, 1)
+    local c = Block( 50, 110, 60, 1)
     c.blocks.down = false
     c.blocks.right = false
     c.blocks.left = false
 
     game.manager:add(c)
 
-    game.manager:add(box.Static(150, 160, 100, 50))
-    game.manager:add(box.Static(200, 50, 60, 200))
-    game.manager:add(box.Static(0, 20, 30, 4))
-    game.manager:add(box.Static(0, 100, 30, 40))
-    game.manager:add(box.Static(200, 0, 50, 50))
-    game.manager:add(box.Static(0, 280, 320, 4))
+    game.manager:add(Block(150, 160, 100, 50))
+    game.manager:add(Block(200, 50, 60, 200))
+    game.manager:add(Block(0, 20, 30, 4))
+    game.manager:add(Block(0, 100, 30, 40))
+    game.manager:add(Block(200, 0, 50, 50))
+    game.manager:add(Block(0, 280, 320, 4))
 
-    game.manager:add(WaterBox(10, 10, 240, 240))
+    local water = Block(10, 100, 240, 100)
+    water:setType('water')
+    game.manager:add(water)
 
-    --game.manager:add(game.platform)
+    game.manager:add(game.platform)
     game.manager:add(game.player)
 
     game.editor = Editor(game.camera, game.manager)
-    game.editor.active = true
+    game.edit(true)
     game.pause()
 
     --sound.load('save.ogg')
@@ -103,16 +123,7 @@ end
 function game.update(dt, time)
 
     if keyboard.wasPressed('enter') then
-
-        if not game.isPaused() then
-            game.pause()
-            game.editor.active = true
-
-        else
-            game.resume()
-            game.editor.active = false
-        end
-
+        game.edit()
     end
 
     if not game.isPaused() then
@@ -124,7 +135,7 @@ function game.update(dt, time)
         game.editor:update()
 
     else
-        game.camera.x = math.floor((game.player.pos.x + 7) / game.conf.width) * game.conf.width
+        game.camera.x = math.floor((game.player.pos.x + 4) / game.conf.width) * game.conf.width
         game.camera.y = math.floor(game.player.pos.y / game.conf.height) * game.conf.height
     end
 
@@ -136,11 +147,33 @@ end
 
 function game.render()
 
-    graphics.setRenderOffset(-game.camera.x, -game.camera.y)
-    game.manager:draw(game.camera.x, game.camera.y, game.camera.x + game.conf.width, game.camera.y + game.conf.height, game.editor.active)
+    if game.editor.active then
+        graphics.setRenderOffset(-game.camera.x + 16, -game.camera.y + 16)
+        game.manager:draw(game.camera.x - 16, game.camera.y - 16, game.camera.x + game.conf.width + 16, game.camera.y + game.conf.height + 16, game.editor.active)
+
+    else
+        graphics.setRenderOffset(-game.camera.x, -game.camera.y)
+        game.manager:draw(game.camera.x, game.camera.y, game.camera.x + game.conf.width, game.camera.y + game.conf.height, game.editor.active)
+    end
+
 
     if game.editor.active then
         game.editor:render()
+    end
+
+end
+
+function game.edit(mode)
+
+    if not game.isPaused() or mode == true then
+        game.pause()
+        graphics.setSize(256 + 32, 144 + 32)
+        game.editor.active = true
+
+    elseif game.isPaused() or mode == false then
+        graphics.setSize(256, 144)
+        game.resume()
+        game.editor.active = false
     end
 
 end

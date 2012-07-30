@@ -73,21 +73,21 @@ end
 
 function Player:update(dt)
 
-    local inWater = self.inside and self.inside.isWater and self.waterDepth >= 0
+    local inFluid = self.inside and self.inside.isFluid and self.fluidDepth >= 0
 
     local now = game.getTime()
     self.animation:update(dt)
 
-    if self.contactSurface.up and not inWater then
+    if self.contactSurface.up and not inFluid then
         self.jumpForce = 0
         self.gravity = 0
     end
 
     -- Movement
     local moved = false
-    local dec = inWater and self.decSpeed * 0.10 or self.decSpeed
-    local acc = inWater and self.accSpeed * 0.25 or self.accSpeed
-    local max = inWater and self.maxSpeed * 0.5 or self.maxSpeed
+    local dec = inFluid and self.decSpeed * 0.10 or self.decSpeed
+    local acc = inFluid and self.accSpeed * 0.25 or self.accSpeed
+    local max = inFluid and self.maxSpeed * 0.5 or self.maxSpeed
 
     if keyboard.wasPressed('left') then
         self.direction = -1
@@ -155,7 +155,7 @@ function Player:update(dt)
         self.slideStart = 0
 
     -- under / in water
-    elseif inWater then
+    elseif inFluid then
 
         if self.movement.x ~= 0 then
             self.animation = self.animations.swim
@@ -183,7 +183,7 @@ function Player:update(dt)
         self.lastMove = now
     end
 
-    if not inWater then
+    if not inFluid then
         self.animations.swim:reset()
         self.animations.swimIdle:reset()
     end
@@ -206,19 +206,20 @@ function Player:update(dt)
 
         elseif self.contactSurface.down then
             self.jumpSpeed = 2.20
+
+            -- check for platform and correct jump force to include platform y velocity
+            if self.contactSurface.down and self.contactSurface.down:is_a(box.Moving) then
+               self.jumpSpeed = self.jumpSpeed - self.contactSurface.down.vel.y
+            end
+
             jump = true
 
-        elseif inWater and self.waterDepth < 6 then
+        elseif inFluid and self.fluidDepth < 6 then
             self.jumpSpeed = 2.20
             jump = true
         end
 
         if jump then
-            -- check for platform and correct jump force to include platform y velocity
-            --if self.contactSurface.down and self.contactSurface.down:is_a(box.Moving) then
-            --    self.jumpForce = self.jumpForce + self.contactSurface.down.vel.y
-            --end
-
             self.slideStart = 0
             self.animations.rise:reset()
             self.animations.dive:reset()
@@ -245,7 +246,7 @@ function Player:update(dt)
     end
 
     -- Fall asleep after some time
-    if now - self.lastMove > 25.0 and not inWater then
+    if now - self.lastMove > 25.0 and not inFluid then
         self.animation = self.animations.sleep
 
     else
@@ -255,7 +256,7 @@ function Player:update(dt)
     Entity.update(self, dt)
 
     -- Wall sliding / jumps
-    if not inWater then
+    if not inFluid then
 
         if self.vel.y > 0.20 and (self.slideStart == 0 or now - self.slideStart < 0.4) then
 

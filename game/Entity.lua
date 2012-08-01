@@ -29,6 +29,7 @@ function Entity:new(x, y, w, h)
     self.jumpDecelaration = 0
     self.movement = { x = 0, y = 0} 
     self.fluidDepth = 0
+    self.lastPlatform = nil
 
     self.maxFallSpeed = 3
     self:fall(self.maxFallSpeed, 0.35)
@@ -58,8 +59,17 @@ end
 function Entity:setPosition(x, y)
     box.Dynamic.setPosition(self, x, y)
     self.gravity = 0
+    if self.lastPlatform then
+        self:detach()
+    end
 end
 
+function Entity:detach()
+    if self.lastPlatform then
+        table.delete(self.lastPlatform.contacts, self)
+        self.lastPlatform = nil
+    end
+end
 
 function Entity:update(dt)
     
@@ -98,6 +108,10 @@ function Entity:update(dt)
         -- check whether we're falling
         if not self.contactSurface.down then
 
+            if self.lastPlatform then
+                self:detach()
+            end
+
             if not self.inside then
                 self.gravity = self.gravity + self.gravityAcceleration
             end
@@ -114,7 +128,12 @@ function Entity:update(dt)
 
                 -- check for platforms and make the entity move downwards with them
                 if self.contactSurface.down:is_a(box.Moving) then
-                    self.gravity = self.contactSurface.down.vel.y
+                    if self.lastPlatform then
+                        self:detach()
+                    end
+                    self.lastPlatform = self.contactSurface.down
+                    table.insert(self.lastPlatform.contacts, self)
+                    self.gravity = self.lastPlatform.vel.y
                 end
 
             else

@@ -63,6 +63,102 @@ function Block:draw(debug)
 end
 
 
+Platform = class('Platform', box.Moving)
+function Platform:new(x, y, w, h, points)
+
+    self.speed = 0.6
+    box.Moving.new(self, x, y, w, h)
+    self.blocks.down = false
+    self.blocks.right = false
+    self.blocks.left = false
+
+    self.contacts = {}
+    self.waypoints = points or { { x, y } }
+    self.direction = 1
+    self.toDirection = self.direction
+    self.point = 2
+
+    self:reset()
+
+end
+
+function Platform:reset()
+    local start = self.waypoints[self.point]
+    self.toDirection = self.direction
+    self:setPosition(start[1] - self.size.x / 2, start[2] - self.size.y / 2)
+end
+
+function Platform:update(dt)
+
+    box.Moving.update(self)
+
+    local from = self.waypoints[self.point]
+    local to = self.waypoints[self.point + self.toDirection]
+
+    --local dist = math.sqrt(dx * dx + dy * dy)
+    local dx = to[1] - (self.pos.x + self.size.x / 2)
+    local dy = to[2] - (self.pos.y + self.size.y / 2)
+    local r = math.atan2(dy, dx)
+    local vx = math.cos(r) * self.speed
+    local vy = math.sin(r) * self.speed
+
+    if vx < 0 then
+        vx = math.max(dx, vx)
+
+    elseif vx > 0 then
+        vx = math.min(dx, vx)
+    end
+
+    if vy < 0 then
+        vy = math.max(dy, vy)
+
+    elseif vy > 0 then
+        vy = math.min(dy, vy)
+    end
+
+    self.vel.x = vx
+    self.vel.y = vy
+
+    if vx == 0 and vy == 0 then
+        self.point = self.point + self.toDirection
+        if self.point == #self.waypoints then
+            self.toDirection = -1
+
+        elseif self.point == 1 then
+            self.toDirection = 1
+        end
+    end
+
+    for i=1,#self.contacts do
+
+        local c = self.contacts[i]
+        c.vel.y = vy
+
+        if c.vel.x == 0 or (c.vel.x > 0 and vx > 0) or (c.vel.x < 0 and vx < 0) then
+            c.vel.x = (c.movement.x * dt) + vx
+        end
+
+    end
+
+end
+
+function Platform:draw(debug)
+
+    box.Moving.draw(self, debug)
+    
+    if debug then
+        graphics.setColor(25, 100, 75)
+        local last = self.waypoints[1]
+        for i=2,#self.waypoints do
+            local point = self.waypoints[i]
+            graphics.line(last[1], last[2], point[1], point[2])
+            last = point
+        end
+    end
+
+end
+
+
 function game.init(conf)
     conf.title = "Kuusi"
     conf.width = 256
@@ -109,7 +205,13 @@ function game.load(arg)
     water:setType('water')
     game.manager:add(water)
 
-    game.manager:add(game.platform)
+    game.manager:add(Platform(64, 32, 32, 4, {
+        { 64, 32 },
+        { 100, 32 },
+        { 100, 64 },
+        { 200, 64 }
+    }))
+
     game.manager:add(game.player)
 
     game.editor = Editor(game.camera, game.manager)
@@ -155,7 +257,6 @@ function game.render()
         graphics.setRenderOffset(-game.camera.x, -game.camera.y)
         game.manager:draw(game.camera.x, game.camera.y, game.camera.x + game.conf.width, game.camera.y + game.conf.height, game.editor.active)
     end
-
 
     if game.editor.active then
         game.editor:render()

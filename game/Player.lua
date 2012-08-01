@@ -220,6 +220,7 @@ function Player:update(dt)
         end
 
         if jump then
+            self:detach()
             self.slideStart = 0
             self.animations.rise:reset()
             self.animations.dive:reset()

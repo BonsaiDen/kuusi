@@ -207,8 +207,8 @@ function MovingBox:update(dt)
 end
 
 function MovingBox:draw()
-    local x = self.pos.x
-    local y = self.pos.y
+    local x = math.round(self.pos.x)
+    local y = math.round(self.pos.y)
     local sx = self.size.x
     local sy = self.size.y
     local cx = x + sx / 2
@@ -799,6 +799,7 @@ table.find = function(t, item)
 end
 
 function BoxManager:update(dt)
+
     --table.sort(self.dynamics, function(a, b)
         --if a.pos.y > b.pos.y then
             --return true

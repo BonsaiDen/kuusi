@@ -123,21 +123,19 @@ function Entity:update(dt)
         else
 
             if not inFluid then
-
                 self.gravity = 0.0001
-
-                -- check for platforms and make the entity move downwards with them
-                if self.contactSurface.down:is_a(box.Moving) then
-                    if self.lastPlatform then
-                        self:detach()
-                    end
-                    self.lastPlatform = self.contactSurface.down
-                    table.insert(self.lastPlatform.contacts, self)
-                    self.gravity = self.lastPlatform.vel.y
-                end
-
             else
                 self.gravity = self.gravity * 0.85
+            end
+
+            -- check for platforms and make the entity move downwards with them
+            if self.contactSurface.down:is_a(box.Moving) then
+                if self.lastPlatform then
+                    self:detach()
+                end
+                self.lastPlatform = self.contactSurface.down
+                table.insert(self.lastPlatform.contacts, self)
+                self.gravity = self.lastPlatform.vel.y
             end
 
         end
@@ -161,13 +159,17 @@ function Entity:update(dt)
     -- check for platform and x velocity to include platform x velocity
     self.vel.x = (self.movement.x * dt)
 
-    if self.contactSurface.down and self.contactSurface.down:is_a(box.Moving) then
+    if self.contactSurface.down and self.contactSurface.down:is_a(box.Moving) and not inFluid then
 
         local mx = self.contactSurface.down.vel.x
         if self.vel.x == 0 or (self.vel.x > 0 and mx > 0) or (self.vel.x < 0 and mx < 0) then
             self.vel.x = (self.movement.x * dt) + mx
         end
         
+    end
+
+    if inFluid and self.vel.y > 0 then
+        self:detach()
     end
 
 end
